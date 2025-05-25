@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Кабинет — CTF-Labs{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">👋 Привет, {{ current_user.username }}!</h2>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Прогресс</h5>
+        <p class="card-text">Найдено флагов: {{ current_user.flags|length }} / {{ total_flags }}</p>
+        <div class="progress" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar" style="width: {{ progress }}%">{{ progress }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Сдать флаг</h5>
+        <form id="flag-form">
+          <div class="input-group">
+            <input type="text" class="form-control" name="flag" placeholder="FLAG{...}" required>
+            <button class="btn btn-primary" type="submit">Отправить</button>
+          </div>
+        </form>
+        <div id="flag-response" class="mt-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="my-4">
+<h4>Мои флаги</h4>
+{% if flags %}
+<table class="table table-sm table-hover">
+  <thead>
+    <tr>
+      <th>Флаг</th>
+      <th>Лаба</th>
+      <th>Тип</th>
+      <th>Время</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for f in flags %}
+    <tr>
+      <td class="text-monospace">{{ f.flag }}</td>
+      <td>{{ f.lab_name }}</td>
+      <td>{{ f.flag_type }}</td>
+      <td>{{ f.found_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted">Вы ещё не нашли ни одного флага.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+const form = document.getElementById('flag-form');
+const respDiv = document.getElementById('flag-response');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  respDiv.innerHTML = '';
+  const formData = new FormData(form);
+  const res = await fetch('/submit_flag', {
+    method: 'POST',
+    body: formData,
+  });
+  const data = await res.json();
+  const cls = data.status === 'success' ? 'alert-success' : 'alert-danger';
+  respDiv.innerHTML = `<div class="alert ${cls}">${data.message}</div>`;
+  if (data.status === 'success') window.location.reload();
+});
+</script>
+{% endblock %}

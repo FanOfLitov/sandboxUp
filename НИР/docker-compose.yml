@@ -1,0 +1,138 @@
+version: "3.8"
+
+############################################
+#   CTF / Лабораторные уязвимые сервисы    #
+############################################
+services:
+  ########################################################
+  #  Flask-backend: аутентификация, кабинет, приём флагов #
+  ########################################################
+  app:
+    build: ./app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"              # http://localhost:5000
+    environment:
+      - DATABASE_URL=postgresql://ctf_user:ctf_pass@postgres:5432/ctf_db
+      - SECRET_KEY=${SECRET_KEY:-supersecretkey}
+    depends_on:
+      - postgres
+    volumes:
+      - flags:/opt/flags          # общий том с исходными флагами
+
+  #–––––––––––––––––––––––––––––––––––––––––––
+  #  PostgreSQL для пользователей и прогресса
+  #–––––––––––––––––––––––––––––––––––––––––––
+  postgres:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: ctf_user
+      POSTGRES_PASSWORD: ctf_pass
+      POSTGRES_DB: ctf_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  ############################
+  #  Учебные лаб-сервисы (5) #
+  ############################
+  # 1. DVWA
+  dvwa:
+    image: vulnerables/web-dvwa
+    ports: ["8080:80"]            # http://localhost:8080
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    depends_on: [dvwa_db]
+    networks: [default]
+
+  dvwa_db:
+    image: mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USER=dvwa
+      - MYSQL_PASSWORD=password
+    volumes: [dvwa_db_data:/var/lib/mysql]
+
+  # 2. OWASP Juice-Shop
+  juice-shop:
+    image: bkimminich/juice-shop
+    ports: ["3000:3000"]          # http://localhost:3000
+    restart: always
+
+  # 3. OWASP Mutillidae II
+  mutillidae:
+    image: citizenstig/dvwa
+    ports: ["8082:80"]            # http://localhost:8082
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    depends_on: [mutillidae_db]
+
+  mutillidae_db:
+    image: mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=mutillidae
+      - MYSQL_USER=mutillidae
+      - MYSQL_PASSWORD=password
+    volumes: [mutillidae_db_data:/var/lib/mysql]
+
+
+
+  bwapp_db:
+    image: mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=bwapp
+      - MYSQL_USER=bwapp
+      - MYSQL_PASSWORD=password
+    volumes: [bwapp_db_data:/var/lib/mysql]
+
+
+
+  ############################################
+  #  Реальные исторически скомпрометированные #
+  ############################################
+  # 6. WordPress 5.0 (известные RCE в ядре + плагинах)
+  wordpress:
+    image: wordpress:5.0
+    ports: ["8085:80"]            # http://localhost:8085
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: wp_db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: wordpress
+    depends_on: [wp_db]
+
+  wp_db:
+    image: mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=password
+    volumes: [wp_db_data:/var/lib/mysql]
+
+
+
+
+
+
+
+###################
+#   Именованные тома
+###################
+volumes:
+  pg_data:
+  flags:
+  dvwa_db_data:
+  mutillidae_db_data:
+  bwapp_db_data:
+  wp_db_data:

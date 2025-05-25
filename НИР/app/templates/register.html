@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Регистрация — CTF-Labs{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <h2 class="mb-4 text-center">Регистрация</h2>
+    <form method="post" action="{{ url_for('auth.register') }}">
+      <div class="mb-3">
+        <label for="username" class="form-label">Логин</label>
+        <input type="text" class="form-control" id="username" name="username" required autofocus>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Пароль</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-success w-100">Создать аккаунт</button>
+    </form>
+    <hr>
+    <p class="text-center small mb-0">Уже зарегистрированы? <a href="{{ url_for('auth.login') }}">Войти</a></p>
+  </div>
+</div>
+{% endblock %}
